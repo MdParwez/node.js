@@ -1,40 +1,56 @@
-const http =  require("http");
-//const fs =  require("fs");
-//const { query } = require("express");
-const express =  require("express");
+// we are going to create our own REST API
+ const express =  require("express");
+ const fs =  require('fs');
+ const users =  require("./MOCK_DATA.json");
 
-const app = express();
-app.get("/",(req,res) =>{
-    return res.send("Hello from Home Page");
-});
-app.get("/about",(req,res) =>{
-    return res.send("Hello from About Page");
-});
-const myServer = http.createServer(app);
-myServer.listen(8000,() => console.log("Server Started"));
-/* it is not good to maintain this much fuzzy code so use express for that
-const myServer = http.createServer((req,res) => {
-    if(req.url === "/favicon.ico") return res.end();
-    const log = `${Date.now()}: ${req.url} New Req Recieved\n`;
-    const myUrl = url.parse(req.url, true);
-    console.log(myUrl);
-    fs.appendFile("log.txt",log,(err,data) => {
-        switch(myUrl.pathname){
-            case "/":
-                res.end("HomePage");
-                break;
-                case "/about":
-                    res.end("AboutPage");
-                    break;
-                    case "/search":
-                    const search = myUrl.query.search-query;
-                    res.end("Here are your result for" + search);
-                    default:
-                    res.end("404 Not found");
-        }
+ const app = express();
+ const PORT = 7000;
+
+ // middleware-plugin
+ app.use(express.urlencoded({extended:false}));
+
+ // middleware setup
+ app.use((req,res,next) =>{
+   console.log("hello from middleware 1");
+   //return res.json({msg: "Hellow from middleware 1"});
+   next();
+ });
+ // routes
+ app.get('/api/users', (req,res) => {
+   return res.json(users);
+ });
+ app.get("/users",(req ,res) =>{
+    const html = `
+    <ul>
+    ${users.map((user)=>`<li>${user.first_name}</li>`).join('')}
+    </ul>
+    `;
+    res.send(html);
+ });
+ // get user by id
+ app.get("/api/users/:id", (req,res) => {
+    const id = Number(req.params.id);
+    const user = users.find ((user) => user.id === id);
+    return res.json(user);
+ });
+ // POST
+ app.post("/api/users", (req, res) => {
+    const body = req.body;
+    users.push(body);
+    fs.writeFile('./MOCK_DATA.json'.JSON.stringify(users),(err,data) =>{
+        return res.json({status: "sucess", id: users.length + 1});
     });
-
-    console.log("New Req Recieved");
-    res.end("Hello from server");
-});
-*/
+    
+ });
+ 
+ // PATCH
+ app.patch("/api/users/:id", (req,res) => {
+    // TODO: Edit the user with id
+    return res.json({status: "pending"});
+ });
+ // Delete
+ app.delete("/api/users/:id", (req,res) => {
+    // TODO: Edit the user with id
+    return res.json({status: "pending"});
+ });
+ app.listen(PORT, () => console.log(`Server started at Port 7000`));
